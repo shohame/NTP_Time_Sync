@@ -2,7 +2,7 @@ import socket
 import time
 from datetime import datetime
 
-def time_server(host='localhost', port=12345):
+def time_server(host='10.0.0.3', port=6000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
