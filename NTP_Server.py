@@ -1,8 +1,10 @@
 import socket
 import time
 from datetime import datetime
+from NTP_common import *
 
-def time_server(host='10.0.0.3', port=6000):
+
+def time_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
@@ -11,8 +13,11 @@ def time_server(host='10.0.0.3', port=6000):
             conn, addr = s.accept()
             with conn:
                 print('Connected by', addr)
-                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                conn.sendall(current_time.encode('utf-8'))
+                current_time_str = datetime.now().strftime(STR_TIME_FORMAT)
+                print(f"Sending current time: {current_time_str}")
+                conn.sendall(current_time_str.encode('utf-8'))
+
 
 if __name__ == "__main__":
-    time_server()
+
+    time_server(host=NTP_SERVER_IP, port=NTP_SERVER_PORT)

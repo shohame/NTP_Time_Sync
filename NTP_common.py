@@ -1,0 +1,5 @@
+
+NTP_SERVER_IP = "10.0.0.3"
+NTP_SERVER_PORT = 12349
+
+STR_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
