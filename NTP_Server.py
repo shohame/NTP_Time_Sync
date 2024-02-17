@@ -11,12 +11,13 @@ def time_server(host, port):
         print(f"Server started at {host}:{port}. Waiting for connections...")
         while True:
             conn, addr = s.accept()
+            conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
             with conn:
                 print('Connected by', addr)
-                current_time_str = datetime.now().strftime(STR_TIME_FORMAT)
-                print(f"Sending current time: {current_time_str}")
-                conn.sendall(current_time_str.encode('utf-8'))
-
+                send_current_time(conn)
+                dt_msec, _ = receive_time_and_calculate_diff(conn)
+                sent_dt(dt_msec)
 
 if __name__ == "__main__":
 
