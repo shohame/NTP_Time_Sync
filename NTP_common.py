@@ -4,7 +4,7 @@ import ctypes
 from ctypes import wintypes
 
 NTP_SERVER_IP = "10.0.0.3"
-NTP_SERVER_IP = "10.100.102.24"
+NTP_SERVER_IP = "10.100.102.19"
 NTP_SERVER_PORT = 12349
 
 STR_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -19,7 +19,7 @@ def sent_dt(s, dt_msec):
     s.sendall(str(dt_msec).encode('utf-8'))
 
 def receive_dt(s):
-    return s.recv(1024).decode('utf-8')
+    return float(s.recv(1024).decode('utf-8'))
 def receive_time_and_calculate_diff(s):
     server_time_str = s.recv(1024).decode('utf-8')
     datetime_other = str_to_datetime(server_time_str)
@@ -31,7 +31,6 @@ def receive_time_and_calculate_diff(s):
 def send_current_time(s):
     current_time_str = datetime.now().strftime(STR_TIME_FORMAT)
     s.sendall(current_time_str.encode('utf-8'))
-
 
 
 # Define the SYSTEMTIME structure
