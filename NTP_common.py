@@ -2,12 +2,21 @@ import subprocess
 from datetime import datetime
 import ctypes
 from ctypes import wintypes
+import time
+from datetime import timedelta
+from NTP_Parameters import *
 
-NTP_SERVER_IP = "10.0.0.3"
-NTP_SERVER_IP = "10.100.102.19"
-NTP_SERVER_PORT = 12349
 
 STR_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+
+
+def update_computer_current_time_with_a_delta_msec(real_dt_msec):
+    datetime_current_time = datetime.now()
+    lt_tz = datetime_current_time.astimezone()
+    utc_offset_seconds = lt_tz.utcoffset().total_seconds() if lt_tz.utcoffset() else 0    # Getting the UTC offset in seconds
+    msec_from_current_time = real_dt_msec + utc_offset_seconds*1000
+    datetime_to_set = datetime_current_time - timedelta(milliseconds=msec_from_current_time)
+    set_system_time_precise(datetime_to_set)
 
 def str_to_datetime(time_str):
     return datetime.strptime(time_str, STR_TIME_FORMAT)
@@ -20,13 +29,14 @@ def sent_dt(s, dt_msec):
 
 def receive_dt(s):
     return float(s.recv(1024).decode('utf-8'))
+
 def receive_time_and_calculate_diff(s):
-    server_time_str = s.recv(1024).decode('utf-8')
-    datetime_other = str_to_datetime(server_time_str)
-    time_diff = (datetime.now() - datetime_other)
+    other_time_str = s.recv(1024).decode('utf-8')
+    other_datetime = str_to_datetime(other_time_str)
+    time_diff = (datetime.now() - other_datetime)
     sec_diff = time_diff.total_seconds()
     dt_msec = sec_diff * 1000
-    return dt_msec, datetime_other
+    return dt_msec, other_datetime
 
 def send_current_time(s):
     current_time_str = datetime.now().strftime(STR_TIME_FORMAT)
