@@ -11,9 +11,12 @@ STR_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 def update_computer_current_time_with_a_delta_msec(real_dt_msec):
     datetime_current_time = datetime.now()
-    lt_tz = datetime_current_time.astimezone()
-    utc_offset_seconds = lt_tz.utcoffset().total_seconds() if lt_tz.utcoffset() else 0    # Getting the UTC offset in seconds
-    msec_from_current_time = real_dt_msec + utc_offset_seconds*1000
+    if platform.system() == 'Windows':
+        lt_tz = datetime_current_time.astimezone()
+        utc_offset_seconds = lt_tz.utcoffset().total_seconds() if lt_tz.utcoffset() else 0    # Getting the UTC offset in seconds
+        msec_from_current_time = real_dt_msec + utc_offset_seconds * 1000
+    else: # Linux
+        msec_from_current_time = real_dt_msec
     datetime_to_set = datetime_current_time - timedelta(milliseconds=msec_from_current_time)
     set_system_time_precise(datetime_to_set)
 
@@ -60,24 +63,7 @@ class timespec(ctypes.Structure):
     _fields_ = [("tv_sec", ctypes.c_long), ("tv_nsec", ctypes.c_long)]
 
 def set_system_time_precise(datetime_obj):
-    if platform.system() != 'Windows':
-        # Convert datetime object to seconds and nanoseconds
-        timestamp = datetime_obj.timestamp()
-        sec = int(timestamp)
-        nsec = int((timestamp - sec) * 1e9)  # Convert remainder to nanoseconds
-
-        # Prepare timespec structure
-        ts = timespec(sec, nsec)
-
-        # Load the library and set argument types
-        librt = ctypes.CDLL('librt.so.1', use_errno=True)
-        librt.clock_settime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
-
-        # Set system time (requires root privileges)
-        if librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts)) != 0:
-            errno = ctypes.get_errno()
-            raise OSError(errno, f"Failed to set system time: {os.strerror(errno)}")
-    else:
+    if platform.system() == 'Windows':
 
         st = SYSTEMTIME()
         st.wYear = datetime_obj.year
@@ -96,5 +82,20 @@ def set_system_time_precise(datetime_obj):
         # Set system time (requires administrative privileges)
         if not kernel32.SetSystemTime(ctypes.byref(st)):
             raise ctypes.WinError()
+    else: # Linux:
+        timestamp = datetime_obj.timestamp()
+        sec = int(timestamp)
+        nsec = int((timestamp - sec) * 1e9)  # Convert remainder to nanoseconds
 
+        # Prepare timespec structure
+        ts = timespec(sec, nsec)
+
+        # Load the library and set argument types
+        librt = ctypes.CDLL('librt.so.1', use_errno=True)
+        librt.clock_settime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
+
+        # Set system time (requires root privileges)
+        if librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts)) != 0:
+            errno = ctypes.get_errno()
+            raise OSError(errno, f"Failed to set system time: {os.strerror(errno)}")
 
