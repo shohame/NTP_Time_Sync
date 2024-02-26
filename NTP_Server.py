@@ -2,7 +2,7 @@ import socket
 import time
 from datetime import datetime
 from NTP_common import *
-
+from NTP_Parameters import *
 
 def time_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -17,7 +17,7 @@ def time_server(host, port):
                 print('Connected by', addr)
                 send_current_time(conn)
                 dt_msec, _ = receive_time_and_calculate_diff(conn)
-                sent_dt(dt_msec)
+                sent_dt(conn, dt_msec)
 
 if __name__ == "__main__":
 

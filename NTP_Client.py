@@ -4,7 +4,7 @@ import time
 from datetime import timedelta, datetime
 from NTP_common import *
 import platform
-
+from NTP_Parameters import *
 
 def ntp_client(server_host, server_port):
 

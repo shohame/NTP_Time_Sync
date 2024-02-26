@@ -54,11 +54,29 @@ class SYSTEMTIME(ctypes.Structure):
         ("wSecond", wintypes.WORD),
         ("wMilliseconds", wintypes.WORD),
     ]
-def set_system_time_precise(datetime_obj):
 
-    if (platform.system() != 'Windows'):
-        subprocess.run(['sudo', 'date', '+%Y-%m-%d', '-s', datetime_obj.strftime('%Y-%m-%d')])
-        subprocess.run(['sudo', 'date', '+%T', '-s', datetime_obj.strftime('%H:%M:%S')])
+CLOCK_REALTIME = 0
+class timespec(ctypes.Structure):
+    _fields_ = [("tv_sec", ctypes.c_long), ("tv_nsec", ctypes.c_long)]
+
+def set_system_time_precise(datetime_obj):
+    if platform.system() != 'Windows':
+        # Convert datetime object to seconds and nanoseconds
+        timestamp = datetime_obj.timestamp()
+        sec = int(timestamp)
+        nsec = int((timestamp - sec) * 1e9)  # Convert remainder to nanoseconds
+
+        # Prepare timespec structure
+        ts = timespec(sec, nsec)
+
+        # Load the library and set argument types
+        librt = ctypes.CDLL('librt.so.1', use_errno=True)
+        librt.clock_settime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
+
+        # Set system time (requires root privileges)
+        if librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts)) != 0:
+            errno = ctypes.get_errno()
+            raise OSError(errno, f"Failed to set system time: {os.strerror(errno)}")
     else:
 
         st = SYSTEMTIME()
